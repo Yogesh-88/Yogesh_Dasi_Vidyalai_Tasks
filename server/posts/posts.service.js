@@ -1,17 +1,13 @@
 const axios = require('axios').default;
 
-/**
- * Fetches posts from a remote API.
- * @async
- * @param {Object} [params] - The parameters for fetching posts.
- * @param {number} [params.start=0] - The start index of posts to fetch.
- * @param {number} [params.limit=10] - The maximum number of posts to fetch.
- * @returns {Promise<Array>} - A promise that resolves to an array of posts.
- */
+const instance = axios.create({
+  timeout: 20000,
+});
+
 async function fetchPosts(params) {
   const { start = 0, limit = 10 } = params || {};
-  const { data: posts } = await axios.get(
-    'https://jsonplaceholder.typicode.com/posts?limit',
+  const { data: posts } = await instance.get(
+    'https://jsonplaceholder.typicode.com/posts',
     {
       params: {
         _start: start,
@@ -19,8 +15,14 @@ async function fetchPosts(params) {
       },
     },
   );
-
   return posts;
 }
 
-module.exports = { fetchPosts };
+async function fetchPhotosByAlbumId(albumId) {
+  const { data: photos } = await instance.get(
+    `https://jsonplaceholder.typicode.com/albums/${albumId}/photos`,
+  );
+  return photos;
+}
+
+module.exports = { fetchPosts, fetchPhotosByAlbumId };
