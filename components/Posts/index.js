@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import styled from '@emotion/styled';
 import Post from './Post';
 import Container from '../common/Container';
-import useWindowWidth from '../hooks/useWindowWidth';
+import { useWindowWidth } from '../contexts/WindowWidthContext';
 
 const PostListContainer = styled.div(() => ({
   display: 'flex',
@@ -35,40 +35,61 @@ const LoadMoreButton = styled.button(() => ({
 export default function Posts() {
   const [posts, setPosts] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [start, setStart] = useState(0);
+  const [allPostsLoaded, setAllPostsLoaded] = useState(false);
 
   const { isSmallerDevice } = useWindowWidth();
+  const limit = isSmallerDevice ? 5 : 10;
 
   useEffect(() => {
-    const fetchPost = async () => {
-      const { data: posts } = await axios.get('/api/v1/posts', {
-        params: { start: 0, limit: isSmallerDevice ? 5 : 10 },
-      });
-      setPosts(posts);
+    const fetchPosts = async () => {
+      try {
+        const { data: newPosts } = await axios.get('/api/v1/posts', {
+          params: { start: 0, limit },
+        });
+        setPosts(newPosts);
+        setStart(limit);
+        setAllPostsLoaded(newPosts.length < limit);
+      } catch (error) {
+        console.error('Error fetching posts:', error);
+      }
     };
 
-    fetchPost();
-  }, [isSmallerDevice]);
+    fetchPosts();
+  }, [isSmallerDevice, limit]);
 
-  const handleClick = () => {
+  const handleLoadMore = async () => {
     setIsLoading(true);
 
-    setTimeout(() => {
+    try {
+      const { data: newPosts } = await axios.get('/api/v1/posts', {
+        params: { start, limit },
+      });
+
+      setPosts(prevPosts => [...prevPosts, ...newPosts]);
+      setStart(prevStart => prevStart + limit);
+      setAllPostsLoaded(newPosts.length < limit);
+    } catch (error) {
+      console.error('Error loading more posts:', error);
+    } finally {
       setIsLoading(false);
-    }, 3000);
+    }
   };
 
   return (
     <Container>
       <PostListContainer>
         {posts.map(post => (
-          <Post post={post} />
+          <Post key={post.id} post={post} />
         ))}
       </PostListContainer>
 
       <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <LoadMoreButton onClick={handleClick} disabled={isLoading}>
-          {!isLoading ? 'Load More' : 'Loading...'}
-        </LoadMoreButton>
+        {!allPostsLoaded && (
+          <LoadMoreButton onClick={handleLoadMore} disabled={isLoading}>
+            {!isLoading ? 'Load More' : 'Loading...'}
+          </LoadMoreButton>
+        )}
       </div>
     </Container>
   );
