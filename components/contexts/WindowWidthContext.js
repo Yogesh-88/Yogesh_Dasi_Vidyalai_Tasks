@@ -4,7 +4,6 @@ const WindowWidthContext = createContext();
 
 export const WindowWidthProvider = ({ children }) => {
   const [isSmallerDevice, setIsSmallerDevice] = useState(false);
-
   useEffect(() => {
     const handleResize = () => {
       const width = window.innerWidth;

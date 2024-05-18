@@ -152,7 +152,11 @@ const Post = ({ post }) => {
     <PostContainer>
       <Header>
         <Avatar>{user && getUserInitials(user)}</Avatar>
-        <span>{user && user.name}</span>
+        <span>
+          {user && <b>{user.name}</b>}
+          <br />
+          {user && user.email}
+        </span>
       </Header>
       <CarouselContainer>
         <Carousel ref={carouselRef}>
